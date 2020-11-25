@@ -1,4 +1,5 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
+# This is so I can ./update-server.py in the terminal. If it causes problems, remove it and use "python3 update-server.py"
 
 # ----------------------------------------------------------------------------
 # "THE BEER-WARE LICENSE" (Revision 42):
@@ -17,36 +18,38 @@ import json
 import urllib.request
 
 #This is the version of Minecraft we're targeting
-target_mc = "1.16.3"
+version = "1.16.3"
 
-request = urllib.request.urlopen("https://papermc.io/api/v1/paper/" + target_mc) #Request the available Paper builds for the targeted MC version
+request = urllib.request.urlopen("https://papermc.io/api/v1/paper/" + version) #Request the available Paper builds for the targeted MC version
 body = request.read() #Read the response, store it in body
 api_resp = json.loads(body) #The response is in JSON, so we can parse it into a Python dictionary
 
 release_id = api_resp["builds"]["latest"] #The API tells us the latest build, under the builds>latest subdictionary.
 
-print ("Latest Build for Minecraft " + target_mc + ": Paper-"+ release_id) #tell the user the latest build
+release_id = str(release_id) #reasons
+
+print ("Latest Build for Minecraft " + version + ": Paper-"+ release_id) #tell the user the latest build
 
 vh_file = open("version_history.json","r") #This is Paper's version history file, we can use it to find the current version
-#This isn't foolproof. The file is updated by the server, so if the server hasn't been run yet, the updater will still believe there is an update available.
+#This isn't foolproof. The file is updated by the server, so if the server isn't run then the updater will still believe there is an update available.
 
 vh_content =  vh_file.read() #Read version_history.json
 
 vh_dict = json.loads(vh_content) #Parse version_history.json into a dictionary
 
-current_version = vh_dict["currentVersion"] #Makes the next two lines less of a clusterfuck
+currentVersion = vh_dict["currentVersion"] #Makes the next two lines less of a clusterfuck
 
-installed_build = current_version[10:current_version.find("MC: ") - 2] #Get a substring of the Paper build ID
+installed_build = currentVersion[10:currentVersion.find("MC: ") - 2] #Get a substring of the Paper build ID
 #There's no set length for build IDs, so we get what's between "git-Paper-" (10) and " (MC", which is 2 places before "MC: ".
 
-installed_mc = current_version[current_version.find("MC: ") + 4:len(current_version) - 1] #Specifically separate out the MC version string
+installed_mc = currentVersion[currentVersion.find("MC: ") + 4:len(currentVersion) - 1] #Specifically separate out the MC version string
 #MC Version strings also have no set length, so we get what's between "MC: " and the ")" at the end of the string.
 
 print ("Installed Version: Paper-" + installed_build + " for Minecraft " + installed_mc) #Tell the user their currently installed version
 
-if target_mc > installed_mc: #Didn't realize until after running this that those are strings. apparently it works with strings.
+if version > installed_mc: #Didn't realize until after running this that those are strings, tested it and apparently it works with strings.
 	print("You appear to be upgrading to a newer Minecraft version! Make sure you have backups!")
-elif target_mc < installed_mc:
+elif version < installed_mc:
 	print("The targeted MC version is less than the currently installed version! This tool does not support downgrading!")
 	exit()
 elif installed_build == release_id:
@@ -57,15 +60,11 @@ elif installed_build > release_id: #this is typically overruled by the first sta
 	print("If you're updating between Minecraft versions, this is normal.")
 
 print ("Make sure the server is stopped, because I won't!")
-if input("Download Paper-" + release_id + " for Minecraft " + target_mc + "? (y/n) ") == "y":
-	pass
-	#it's done this way to always exit unless the user explicitly enters "y"
-	#probably could have done != "y"... too late.
-else:
+if input("Download Paper-" + release_id + " for Minecraft " + version + "? (y/n) ") != "y":
 	print("Operation canceled by user")
 	exit()
 
-dl_link = "https://papermc.io/api/v1/paper/" + target_mc + "/" + release_id + "/download" #This is our download link
+dl_link = "https://papermc.io/api/v1/paper/" + version + "/" + release_id + "/download" #This is our download link
 
 print ("Downloading Paper-" + release_id + " from " + dl_link) #Tell the user what we're downloading
 
